@@ -1,3 +1,4 @@
+#coding:utf-8
 import requests
 from concurrent import futures
 from iniReader import getParams,UrlObj
@@ -7,6 +8,27 @@ import time,datetime
 import asyncio
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
+import re
+from re import match,compile,search
+
+
+def resultContain(realValue,expectValue):
+    mode=re.compile(expectValue.encode('utf-8'))
+    res=mode.search(realValue)
+    if res:
+        # print(res.groups())
+        return True,"成功：返回内容包含"+expectValue
+    else:
+        return False,"失败：返回内容不包含"+expectValue
+
+def resultCodeCompare(realValue,expectValue):
+    if realValue==expectValue:
+        return True,"成功：返回码"+expectValue
+    else:
+        return False,"失败：返回码"+expectValue
+
+
+
 
 def singleSender(method,url,**kwargs):
     res=None
@@ -23,6 +45,8 @@ async def gevnetSender(urlObj):
     retObj.name = urlObj.name
     retObj.method = urlObj.method
     retObj.url = urlObj.url
+    retObj.expectCode=urlObj.expectCode
+    retObj.expectContent=urlObj.expectContent
     retObj.retCode, retObj.retContent = singleSender(urlObj.method, urlObj.url)
     return retObj
 
@@ -42,6 +66,8 @@ class multiThreadSender(Thread):
         retObj.name=self.UrlObj.name
         retObj.method=self.UrlObj.method
         retObj.url=self.UrlObj.url
+        retObj.expectCode = self.UrlObj.expectCode
+        retObj.expectContent = self.UrlObj.expectContent
         retObj.retCode,retObj.retContent=singleSender(self.UrlObj.method,self.UrlObj.url)
         self.ret=retObj
     #获取返回
@@ -57,22 +83,29 @@ def multiSender(thread_num,requestList):
 
 
 #单进程，顺序执行
-def singleExecute():
-    starttime=datetime.datetime.now()
+def singleExecuter():
+    # starttime=datetime.datetime.now()
     items=getParams("interfaceDef.ini")
     retList=[]
     for one in items:
         one.retCode,one.retContent=singleSender(one.method,one.url)
-        tempOjb=UrlObj(one.method,one.host,one.url,one.name,one.desc,one.retCode,one.retContent)
+        tempOjb=UrlObj(one.method,one.host,one.url,one.name,one.desc,one.expectCode,one.expectContent,one.retCode,one.retContent)
         retList.append(tempOjb)
-    endtime=datetime.datetime.now()
+    # endtime=datetime.datetime.now()
     for one in retList:
-        print(one.desc,one.retCode,one.name,one.url,one.retContent)
-    print((endtime-starttime).seconds)
+        flag,res=resultContain(one.retContent, one.expectContent)
+        if flag:
+            one.result=res
+            # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
+            print(one.desc,one.result, one.retCode, one.name, one.url)
+        else:
+            one.result=res
+            print(one.desc,one.result, one.retCode, one.name, one.url)
+    # print((endtime-starttime).seconds)
 
 #多进程
-def multiExcuteor():
-    starttime = datetime.datetime.now()
+def multiExcuter():
+    # starttime = datetime.datetime.now()
     items=getParams("interfaceDef.ini")
 
     threadList=deque()
@@ -84,13 +117,21 @@ def multiExcuteor():
         t.start()
         t.join()
         resultList.append(t.getReturn())
-    endtime = datetime.datetime.now()
+    # endtime = datetime.datetime.now()
     for one in resultList:
-        print(one.desc,one.retCode,one.name,one.url,one.retContent)
-    print((endtime - starttime).seconds)
+        # print(one.desc,one.retCode,one.name,one.url,one.retContent,one.expectCode,one.expectContent)
+        flag, res = resultContain(one.retContent, one.expectContent)
+        if flag:
+            one.result = res
+            # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
+            print(one.desc,one.result, one.retCode, one.name, one.url)
+        else:
+            one.result = res
+            print(one.desc,one.result, one.retCode, one.name, one.url)
+    # print((endtime - starttime).seconds)
 
-def eventExecute():
-    starttime = datetime.datetime.now()
+def eventExecuter():
+    # starttime = datetime.datetime.now()
     items = getParams("interfaceDef.ini")
 
     taskList=[]
@@ -99,11 +140,19 @@ def eventExecute():
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.wait(taskList))
-    endtime = datetime.datetime.now()
+    # endtime = datetime.datetime.now()
 
     for one in taskList:
-        print(one.result().desc,one.result().retCode,one.result().name,one.result().url,one.result().retContent)
-    print((endtime - starttime).seconds)
+        # print(one.result().desc,one.result().retCode,one.result().name,one.result().url,one.result().retContent,one.result().expectCode,one.result().expectContent)
+        flag, res = resultContain(one.result().retContent, one.result().expectContent)
+        if flag:
+            one.result().result = res
+            # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
+            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url)
+        else:
+            one.result().result = res
+            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url)
+    # print((endtime - starttime).seconds)
 
 
 def eventExecute2():
@@ -119,18 +168,39 @@ def eventExecute2():
 async def start(executor):
     await asyncio.get_event_loop().run_in_executor(executor,eventExecute2)
 
-if __name__=='__main__':
-    starttime = datetime.datetime.now()
-    exec=ProcessPoolExecutor()
-    asyncio.get_event_loop().run_until_complete(start(exec))
-    endtime = datetime.datetime.now()
-    print((endtime - starttime).seconds)
 
+#验证对比函数
+# if __name__=='__main__':
+#     r = '''</title></head>\r\n<body bgcolor="white">\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.14.0</center>\r\n</body>\r\n</html>'''
+#     e = '404'
+#     print(resultContain(r,e))
+
+
+# 单进程
 # 3000个15秒
-# singleExecute()
-#3000个16秒
-#51888个242秒
-# multiExcuteor()
+# singleExecuter()
+# if __name__=='__main__':
+#     singleExecuter()
+
+#多进程
+# #3000个16秒
+# #51888个242秒
+# # multiExcuteor()
+# if __name__=='__main__':
+#     multiExcuter()
+
+#协程
 #3000个14秒
 #51888个233秒
 # eventExecute()
+if __name__=='__main__':
+    eventExecuter()
+
+
+# 此作为多进程+多协程的组合，但是没有返回值
+# if __name__=='__main__':
+#     starttime = datetime.datetime.now()
+#     exec=ProcessPoolExecutor()
+#     asyncio.get_event_loop().run_until_complete(start(exec))
+#     endtime = datetime.datetime.now()
+#     print((endtime - starttime).seconds)

@@ -4,9 +4,16 @@ import itertools
 import queue
 
 
+class myConfig(configparser.ConfigParser):
+    def __init__(self,defaults=None):
+        configparser.ConfigParser.__init__(self,defaults=defaults)
+    def optionxform(self, optionstr):
+        return optionstr
+
+
 class iniReader():
     def __init__(self, filePath, encoding='utf-8'):
-        self.cf = configparser.ConfigParser()
+        self.cf = myConfig()
         self.cf.read(filePath, encoding=encoding)
 
     def getSections(self):
@@ -28,15 +35,18 @@ def production(*args):
 
 
 class UrlObj():
-    __slots__=['method','host','url','name','desc','retCode','retContent']
-    def __init__(self,method="",host="",url="",name="",desc="",retCode="",retContent=""):
+    __slots__=['method','host','url','name','desc','expectCode','expectContent','retCode','retContent','result']
+    def __init__(self,method="",host="",url="",name="",desc="",expectCode="",expectCotent="",retCode="",retContent="",result=""):
         self.method=method
         self.host=host
         self.url=url
         self.name=name
         self.desc=desc
+        self.expectCode=expectCode
+        self.expectContent=expectCotent
         self.retCode=retCode
         self.retContent=retContent
+        self.result=result
 
 
 
@@ -48,6 +58,8 @@ def getParams(iniFilePath):
     url=""
     name=""
     desc=""
+    expectCode=""
+    expectContent=""
     for section in cf.getSections():
         #区域数据
         sectionData=[]
@@ -66,6 +78,10 @@ def getParams(iniFilePath):
                 desc=cf.getItem(str(section),str(option))
             elif option.lower()=='url':
                 url=cf.getItem(str(section),str(option))
+            elif option.lower()=='expectcode':
+                expectCode=cf.getItem(str(section),str(option))
+            elif option.lower()=='expectcontent':
+                expectContent=cf.getItem(str(section),str(option))
             #其他数据判断
             else:
                 data = cf.getItem(str(section), str(option))
@@ -83,7 +99,7 @@ def getParams(iniFilePath):
         # print(sectionData)
         urls=production(*sectionData)
         for one in urls:
-            tempUrl=UrlObj(method,host,host+url+"?"+"&".join(one),name,desc)
+            tempUrl=UrlObj(method,host,host+url+"?"+"&".join(one),name,desc,expectCode,expectContent)
             alldata.append(tempUrl)
     # alldata.append(production(*sectionData))R
     # print(alldata)
@@ -91,12 +107,8 @@ def getParams(iniFilePath):
     return alldata
 
 
-
-
-
-
 if __name__ == '__main__':
     res=getParams("interfaceDef.ini")
-    # for sec in res:
-    #         print(sec.desc,sec.name,sec.method,sec.host,sec.url)
+    for sec in res:
+        print(sec.desc,sec.name,sec.method,sec.host,sec.url,sec.expectCode,sec.expectContent)
     print(len(res))
