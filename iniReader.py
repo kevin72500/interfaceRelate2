@@ -10,16 +10,17 @@ class myConfig(configparser.ConfigParser):
     def optionxform(self, optionstr):
         return optionstr
 
-
 class iniReader():
     def __init__(self, filePath, encoding='utf-8'):
         self.cf = myConfig()
         self.cf.read(filePath, encoding=encoding)
 
     def getSections(self):
+        # print(self.cf.sections())
         return self.cf.sections()
 
     def getOptions(self, sectId):
+        # print(self.cf.options(sectId))
         return self.cf.options(sectId)
 
     def getItem(self, section, option):
@@ -76,26 +77,33 @@ def getParams(iniFilePath):
             #获取描述
             elif option.lower()=='desc':
                 desc=cf.getItem(str(section),str(option))
+            #获取URL
             elif option.lower()=='url':
                 url=cf.getItem(str(section),str(option))
+            #获取期望返回码
             elif option.lower()=='expectcode':
                 expectCode=cf.getItem(str(section),str(option))
+            #获取期望返回内容
             elif option.lower()=='expectcontent':
                 expectContent=cf.getItem(str(section),str(option))
             #其他数据判断
             else:
                 data = cf.getItem(str(section), str(option))
                 #判断是否是参数
-                if data.startswith('(') and len(data) > 2:
+                if data.startswith('('):# and len(data) > 2:
                     paraName = option
                     paraValue = data
                     paraList = []
-                    #拼接参数url参数部分
-                    for one in eval(paraValue):
-                        paraList.append(paraName + "=" + str(one))
-                    # print(paraList)
-                    #添加到列表
+                    if len(data)>2:
+                        #拼接参数url参数部分
+                        for one in eval(paraValue):
+                            paraList.append(paraName + "=" + str(one))
+                        # print(paraList)
+                    else:
+                        paraList.append(paraName+"=")
+                    # 添加到列表
                     sectionData.append(paraList)
+
         # print(sectionData)
         urls=production(*sectionData)
         for one in urls:
@@ -107,8 +115,12 @@ def getParams(iniFilePath):
     return alldata
 
 
+
+
+
+
 if __name__ == '__main__':
     res=getParams("interfaceDef.ini")
-    for sec in res:
-        print(sec.desc,sec.name,sec.method,sec.host,sec.url,sec.expectCode,sec.expectContent)
+    # for sec in res:
+    #     print(sec.desc,sec.name,sec.method,sec.host,sec.url,sec.expectCode,sec.expectContent)
     print(len(res))

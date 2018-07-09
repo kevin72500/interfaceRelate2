@@ -88,6 +88,7 @@ def singleExecuter():
     items=getParams("interfaceDef.ini")
     retList=[]
     for one in items:
+        # print(one.url)
         one.retCode,one.retContent=singleSender(one.method,one.url)
         tempOjb=UrlObj(one.method,one.host,one.url,one.name,one.desc,one.expectCode,one.expectContent,one.retCode,one.retContent)
         retList.append(tempOjb)
@@ -97,10 +98,10 @@ def singleExecuter():
         if flag:
             one.result=res
             # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
-            print(one.desc,one.result, one.retCode, one.name, one.url)
+            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
         else:
             one.result=res
-            print(one.desc,one.result, one.retCode, one.name, one.url)
+            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
     # print((endtime-starttime).seconds)
 
 #多进程
@@ -124,10 +125,10 @@ def multiExcuter():
         if flag:
             one.result = res
             # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
-            print(one.desc,one.result, one.retCode, one.name, one.url)
+            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
         else:
             one.result = res
-            print(one.desc,one.result, one.retCode, one.name, one.url)
+            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
     # print((endtime - starttime).seconds)
 
 def eventExecuter():
@@ -148,10 +149,10 @@ def eventExecuter():
         if flag:
             one.result().result = res
             # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
-            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url)
+            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url,one.result().retContent.decode('utf-8'))
         else:
             one.result().result = res
-            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url)
+            print(one.result().desc,one.result().result, one.result().retCode, one.result().name, one.result().url,one.result().retContent.decode('utf-8'))
     # print((endtime - starttime).seconds)
 
 
@@ -179,8 +180,8 @@ async def start(executor):
 # 单进程
 # 3000个15秒
 # singleExecuter()
-# if __name__=='__main__':
-#     singleExecuter()
+if __name__=='__main__':
+    singleExecuter()
 
 #多进程
 # #3000个16秒
@@ -193,8 +194,8 @@ async def start(executor):
 #3000个14秒
 #51888个233秒
 # eventExecute()
-if __name__=='__main__':
-    eventExecuter()
+# if __name__=='__main__':
+#     eventExecuter()
 
 
 # 此作为多进程+多协程的组合，但是没有返回值
@@ -204,3 +205,8 @@ if __name__=='__main__':
 #     asyncio.get_event_loop().run_until_complete(start(exec))
 #     endtime = datetime.datetime.now()
 #     print((endtime - starttime).seconds)
+
+
+# if __name__=='__main__':
+#     a,b=singleSender('POST','http://172.30.200.3:8081/ds-web-jt/allPoint/getAspList?soucePointId=&sourcePointName=&sourcePointDesc=0&sourcePointState=2&omcId=1&currentPage=1&itemsPerPage=10&syncState=&searchState=0&mapperState=9&from_time=&to_time=')
+#     print(b.decode('utf-8'))
