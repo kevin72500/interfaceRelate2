@@ -11,6 +11,19 @@ from concurrent.futures import ProcessPoolExecutor
 import re
 from re import match,compile,search
 
+from jinja2 import Environment,FileSystemLoader
+import datetime
+
+def generateFile(data,templatePath,templateFile):
+    env=Environment(loader=FileSystemLoader(templatePath),
+                    trim_blocks=True,
+                    lstrip_blocks=True)
+    template=env.get_template(templateFile)
+    content=template.render(data)
+    # print(content)
+    return content
+
+
 
 def resultContain(realValue,expectValue):
     mode=re.compile(expectValue.encode('utf-8'))
@@ -120,16 +133,15 @@ def multiExcuter():
         resultList.append(t.getReturn())
     # endtime = datetime.datetime.now()
     for one in resultList:
-        # print(one.desc,one.retCode,one.name,one.url,one.retContent,one.expectCode,one.expectContent)
         flag, res = resultContain(one.retContent, one.expectContent)
         if flag:
             one.result = res
-            # print(one.result,one.desc,one.retCode,one.name,one.url,one.retContent,one.retCode,one.retContent,one.expectCode,one.expectContent)
-            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
+            # print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
         else:
             one.result = res
-            print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
+            # print(one.desc,one.result, one.retCode, one.name, one.url,one.retContent.decode('utf-8'))
     # print((endtime - starttime).seconds)
+    return resultList
 
 def eventExecuter():
     # starttime = datetime.datetime.now()
@@ -180,15 +192,21 @@ async def start(executor):
 # 单进程
 # 3000个15秒
 # singleExecuter()
-if __name__=='__main__':
-    singleExecuter()
+# if __name__=='__main__':
+#     singleExecuter()
 
 #多进程
 # #3000个16秒
 # #51888个242秒
 # # multiExcuteor()
-# if __name__=='__main__':
-#     multiExcuter()
+if __name__=='__main__':
+    res=multiExcuter()
+    now=datetime.datetime.now()
+    content = generateFile({'curdate': now, 'resultSet':res}, '.', 'outputTemplate.html')
+    with open('result_'+str(now)+'.html','w+',encoding='utf-8') as f:
+        for one in content:
+            f.writelines(one)
+
 
 #协程
 #3000个14秒

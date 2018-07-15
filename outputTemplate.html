@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>接口测试结果</title>
+</head>
+<body>
+<h1>
+    <p>测试结果：{{ curdate }}</p>
+</h1>
+
+<p>
+    <table border="5" align="left">
+        <tr align="center">
+            <th>描述</th>
+            <th >结果</th>
+            <th >返回码</th>
+            <th >名称</th>
+            <th >url地址</th>
+            <th >返回值</th>
+        </tr>
+    {% for one in resultSet %}
+        <tr align="left">
+            <td >{{ one.desc }}</td>
+            <td >{{ one.result }}</td>
+            <td >{{ one.retCode }}</td>
+            <td >{{ one.name }}</td>
+            <td >{{ one.url }}</td>
+            <td >{ one.retContent.decode('utf-8') }}</td>
+            <!--<td>{{ one.retContent.decode('utf-8') }}</td>-->
+        </tr>
+    {% endfor %}
+    </table>
+</p>
+</body>
+</html>
